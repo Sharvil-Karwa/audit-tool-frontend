@@ -5,6 +5,8 @@ import getDepartments from "@/actions/get-departments";
 import getEquipments from "@/actions/get-equipments";
 import getAreas from "@/actions/get-areas";
 import getObservations from "@/actions/get-observations";
+import getRatings from "@/actions/get-ratings";
+import getSources from "@/actions/get-sources";
 
 const AuditPage = async ({ params }: { params: { auditId: string } }) => { 
 
@@ -13,12 +15,15 @@ const AuditPage = async ({ params }: { params: { auditId: string } }) => {
     const departments = await getDepartments(params.auditId);
     const equipments = await getEquipments(params.auditId); 
     const areas = await getAreas(params.auditId);
-    const observations = await getObservations(params.auditId);
+    const observations = await getObservations(params.auditId); 
+    const ratings = await getRatings(params.auditId);
+    const sources = await getSources(params.auditId);
+
     return (
       <Container>
         <div className="flex flex-col justify-center items-center h-screen">
           {audit.name} 
-          <DepartmentList departments={departments} auditId={params.auditId} depEquipments={equipments} areas={areas} areaObservations={observations}/>
+          <DepartmentList departments={departments} auditId={params.auditId} depEquipments={equipments} areas={areas} areaObservations={observations} ratings={ratings} sources={sources}/>
         </div>
       </Container>
     )
