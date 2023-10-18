@@ -21,8 +21,8 @@ const AuditPage = async ({ params }: { params: { auditId: string } }) => {
 
     return (
       <Container>
-        <div className="flex flex-col justify-center items-center h-screen">
-          {audit.name} 
+        <div className="flex flex-col h-screen justify-center items-center border">
+          <div className="font-bold text-2xl m-4">{audit.name} </div>
           <DepartmentList departments={departments} auditId={params.auditId} depEquipments={equipments} areas={areas} areaObservations={observations} ratings={ratings} sources={sources}/>
         </div>
       </Container>
