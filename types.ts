@@ -25,6 +25,7 @@ export interface Equipment {
   name: string;
   location: string;
   type: string;
+  depId: string;
 }
 
 export interface Area {

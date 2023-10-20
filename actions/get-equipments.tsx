@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { DepEquipments } from "@/types";
+import { Equipment } from "@/types";
 
 
-const getEquipments = async (auditId:string): Promise<DepEquipments[]> => {
+const getEquipments = async (auditId:string): Promise<Equipment[]> => {
   try {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/${auditId}/department-equipments`);
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/${auditId}/equipments`);
     return response.data;
   } catch (error) {
     console.error('Error fetching equipments:', error);
