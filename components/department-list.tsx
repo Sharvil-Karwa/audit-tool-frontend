@@ -63,7 +63,10 @@ interface SubmissionData {
   rating: string;
   source: string | null;
   auditName: String | null;
-  auditId: string
+  auditId: string;
+  new_src: Boolean;
+  new_obs: Boolean;
+  new_area: Boolean;
 }
 
 const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, equipments, areas, areaObservations, sources, ratings, auditName }) => {
@@ -126,8 +129,8 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
   
   const generateExcelFile = (data: SubmissionData) => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ["user","department", "equipment", "eq_id", "type", "location", "area", "observation", "reference", "comment", "rating", "source", "audit name", "audit id"],
-      [data.user, data.department, data.equipment, data.eq_id, data.type, data.location, data.area, data.observation, data.reference, data.comment, data.rating, data.source, auditName ,auditId],
+      ["user","department", "equipment", "eq_id", "type", "location", "area", "observation", "reference", "comment", "rating", "source", "audit_name", "audit_id", "new_area", "new_obs",  "new_src"],
+      [data.user, data.department, data.equipment, data.eq_id, data.type, data.location, data.area, data.observation, data.reference, data.comment, data.rating, data.source, auditName ,auditId, data.new_area, data.new_obs,  data.new_src],
     ]);
 
     const wb = XLSX.utils.book_new();
@@ -162,7 +165,10 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
       "comment": comment ? comment : "",
       "rating": selectedRating ? selectedRating.rating : "",
       "auditId": auditId,
-      "auditName": auditName
+      "auditName": auditName,
+      "new_area": newarea,
+      "new_obs": newobs,
+      "new_src": newsrc,
     };
 
     try {
@@ -229,7 +235,10 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
               rating: data.rating,
               source: data.source,
               auditId: auditId,
-              auditName: auditName
+              auditName: auditName,
+              new_area: data.new_area,
+              new_obs: data.new_obs,
+              new_src: data.new_src
             });
             toast.error("Submission Error");
           }
@@ -249,7 +258,10 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
         rating: data.rating,
         source: data.source,
         auditId: auditId,
-        auditName: auditName
+        auditName: auditName,
+        new_area: data.new_area,
+              new_obs: data.new_obs,
+              new_src: data.new_src
       });
       toast.error("Submission Error")
       console.error('Error:', error);
