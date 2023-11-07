@@ -42,6 +42,12 @@ export interface AreaObservations {
   observationId: string;
 } 
 
+export interface Observation {
+  id: string;
+  observation: string;
+  reference: string;
+} 
+
 export interface Source{
   id: string;
   source: string;
@@ -50,4 +56,28 @@ export interface Source{
 export interface Rating{
   id: string;
   rating: string;
+}
+
+export interface Reference {
+  id: string;
+  mainRef: string;
+  reference: string;
+  isMain: string;
+  country: string
+}
+
+export interface Reference {
+  id: string;
+  mainRef: string;
+  reference: string;
+  isMain: string;
+  country: string
+}
+
+export interface RefObs {
+  id: string;
+  refId: string;
+  obsId: string;
+  reference: string;
+  country: string;
 }

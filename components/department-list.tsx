@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Area, AreaObservations, Equipment, Department, Rating, Source } from "@/types";
+import { Area, AreaObservations, Equipment, Department, Rating, Source, Reference, Observation, RefObs } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Download } from "lucide-react"
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Separator } from '@radix-ui/react-dropdown-menu';
@@ -37,6 +37,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { currentUser } from "@clerk/nextjs";
 
 interface DepartmentListProps {
   auditId: string;
@@ -46,7 +47,11 @@ interface DepartmentListProps {
   ratings: Rating[];
   sources: Source[];
   equipments: Equipment[];
-  auditName: String
+  auditName: String;
+  references: Reference[]
+  observations: Observation[];
+  refObs: RefObs[];
+  email: string;
 }
 
 interface SubmissionData {
@@ -69,20 +74,24 @@ interface SubmissionData {
   new_area: Boolean;
 }
 
-const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, equipments, areas, areaObservations, sources, ratings, auditName }) => {
+const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departments, equipments, areas, areaObservations, sources, ratings, auditName, references, observations, refObs }) => {
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
   const [filteredEquipments, setFilteredEquipments] = useState<Equipment[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [filteredAreaObservations, setFilteredAreaObservations] = useState<AreaObservations[]>([]);
   const [selectedObservation, setSelectedObservation] = useState<AreaObservations | null>(null);
+  const [selectedObservation2, setSelectedObservation2] = useState<Observation | null>(null);
   const [selectedSource, setSelectedSource] = useState<Source | null>(null);
   const [selectedRating, setSelectedRating] = useState<Rating | null>(null);
-  const [comment, setComment] = useState<string | null>(null);
-  const [newArea, setNewArea] = useState<string | null>(null);
-  const [newObs, setNewObs] = useState<string | null>(null);
-  const [newRef, setNewRef] = useState<string | null>(null);
-  const [newSrc, setNewSrc] = useState<string | null>(null);
+  const [filteredRefObs, setFilteredRefObs] = useState<RefObs[]>([]);
+  const [reference, setReference] = useState<string | null>(null);
+  const [refCountry, setRefCountry] = useState<string | null>(null);
+  const [comment, setComment] = useState<string | null>("");
+  const [newArea, setNewArea] = useState<string | null>("");
+  const [newObs, setNewObs] = useState<string | null>("");
+  const [newRef, setNewRef] = useState<string | null>("");
+  const [newSrc, setNewSrc] = useState<string | null>("");
   const inputRef = useRef<HTMLInputElement>(null);
   const inputRef2 = useRef<HTMLInputElement>(null);
   const inputRef3 = useRef<HTMLInputElement>(null);
@@ -111,6 +120,27 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
 
   const handleAreaObservationSelection = (equipment: AreaObservations) => {
     setSelectedObservation(equipment);
+    const filteredRefOb:RefObs[] = [];
+    for(const refob of refObs){
+      if(refob.obsId==equipment.observationId){
+        filteredRefOb.push(refob)
+      }
+    }
+    setFilteredRefObs(filteredRefOb);
+    setSelectedObservation2(null);
+    setnewobs(false)
+  };
+
+  const handleNewAreaObservationSelection = (equipment: Observation) => {
+    setSelectedObservation2(equipment);
+    const filteredRefOb:RefObs[] = [];
+    for(const refob of refObs){
+      if(refob.obsId==equipment.id){
+        filteredRefOb.push(refob)
+      }
+    }
+    setFilteredRefObs(filteredRefOb);
+    setSelectedObservation(null);
     setnewobs(false)
   };
 
@@ -135,32 +165,48 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    XLSX.writeFile(wb, "data.xlsx");
+    XLSX.writeFile(wb, `${data.auditName}_data.xlsx`);
   };
 
-  const [ip, setIp] = useState('')
+ 
 
-        useEffect(()=>{
-            getUserIp();
-        }, [])
+  
+        const downloadAuditData = async () => {
+          try {
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/${auditId}`);
+            const jsonData = response.data;
+        
+            // Convert JSON to a pretty formatted string with 2-space indentation
+            const prettyJson = JSON.stringify(jsonData, null, 2);
+        
+            const blob = new Blob([prettyJson], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+        
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        
+            toast.success('Downloaded data');
+          } catch (error) {
+            toast.error('Error occurred');
+            console.log(error);
+          }
+        };
 
-        const getUserIp = async () => {
-            const ip = await axios.get('https://ipapi.co/json');
-            setIp(ip.data.ip)
-        }
-
-  const handleSubmission = async () => {
-
+  const handleSubmission = async () => {    
     const data = {
-      "user": ip,
+      "user": email,
       "department": selectedDepartment ? selectedDepartment.name : "",
       "equipment": selectedEquipment ? selectedEquipment.name : "",
       "eq_id": selectedEquipment ? selectedEquipment.id: "",
       "type": selectedEquipment ? selectedEquipment.type: "",
       "location": selectedEquipment ? selectedEquipment.location : "",
       "area": newarea ? newArea : (selectedArea ? selectedArea.area : ""),
-      "observation": newobs ? newObs : (selectedObservation ? selectedObservation.obs : ""),
-      "reference": newobs ? newRef : (selectedObservation? selectedObservation.reference : ""),
+      "observation": newobs ? newObs : (selectedObservation ? selectedObservation.obs : (selectedObservation2 ? selectedObservation2.observation : "")),
+      "reference": newobs ? newRef : reference ? reference : "",
       "source": newsrc ? newSrc : (selectedSource ? selectedSource.source : ""),
       "comment": comment ? comment : "",
       "rating": selectedRating ? selectedRating.rating : "",
@@ -169,22 +215,29 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
       "new_area": newarea,
       "new_obs": newobs,
       "new_src": newsrc,
+      "refCountry" : refCountry ? refCountry : ""
     };
+
+    console.log("data", data)
+
+    if(!data.reference){
+      data.reference = ""
+    }
 
     try {
 
 
-      if(newArea && !comment){
+      if(newarea && !comment){
         toast.error("Please fill additional observation details as you have added a new area");
         return;
       } 
 
-      if(newObs && !comment){
+      if(newobs && !comment){
         toast.error("Please fill additional observation details as you have added a new observation");
         return;
       }  
 
-      if(newObs && !newRef){
+      if(newobs && !newRef){
         toast.error("Enter observation reference");
         return;
       }
@@ -197,9 +250,12 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
 
           // adding area, source and observation to database
 
+          let newareaid = null
+          let newobsid = null
+
           if(newarea){
             const resp_area = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/${auditId}/areas`, {area : newArea, observations: []}) 
-
+            newareaid = resp_area.data.id
           } 
 
           if(newobs){
@@ -207,8 +263,23 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
               observation: newObs,
               reference: newRef
             }) 
-            
-          } 
+            newobsid = resp_obs.data.id
+          }  
+
+          console.log(newareaid)
+
+          if(newareaid && newarea){
+            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/${auditId}/areas/${newareaid}`, {
+              area: newArea,
+              observations: [
+                {
+                  "id": newobsid ? newobsid : (selectedObservation ? selectedObservation.id : selectedObservation2 ? selectedObservation2.id : ""),
+                  "observation" : data.observation,
+                  "reference" : data.reference
+                }
+              ]
+            })
+          }
 
           if(newsrc){
             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/${auditId}/sources`, {
@@ -218,7 +289,8 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
 
       
           if (response.status === 200) {
-            router.push('/success');
+              toast.success("Submission successful");
+              window.location.reload()
           } else {
             // Generate the Excel file with the data
             generateExcelFile({
@@ -263,7 +335,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
               new_obs: data.new_obs,
               new_src: data.new_src
       });
-      toast.error("Submission Error")
+      toast.error("Submission error")
       console.error('Error:', error);
     }
   };
@@ -274,6 +346,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
   const [openObs, setOpenObs] = React.useState(false)
   const [openSrc, setOpenSrc] = React.useState(false)
   const [openRat, setOpenRat] = React.useState(false)
+  const [openRef, setOpenRef] = React.useState(false)
   const[openAreaBox, setOpenAreaBox] = useState(false)
   const [newarea, setnewarea] = useState(false)
   const[openObsBox, setOpenObsBox] = useState(false)
@@ -284,7 +357,12 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
   return (
     <div className="container mx-auto p-4 md:p-10 max-w-4xl">
 
-      <div className="mt-4 mx-4 text-2xl font-bold">{auditName}</div>
+      <div className="mt-4 mx-4 text-2xl font-bold">
+        {auditName}
+        <Button className="ml-4" onClick={downloadAuditData}>
+          Download Audit Data <Download className="ml-4" />
+        </Button>
+      </div>
 
       <div className="flex flex-col mx-auto items-left"> 
         <div className="grid md:grid-cols-3 sm:grid-cols-1 mb-4">
@@ -473,7 +551,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
         <div className="flex flex-col">
           {openAreaBox && <div>
             <div className="font-bold">Enter new area</div>
-          <div className="flex items-center"> {/* Create a flex container for input and button */}
+          <div className="flex items-center"> 
             <input
               type="text"
               placeholder="Enter new area"
@@ -511,7 +589,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
                     >
                       
                       {newobs && newObs}
-                      {!newobs && (selectedObservation ? selectedObservation.obs : 'Select an observation')}
+                      {!newobs && (selectedObservation ? selectedObservation.obs : (selectedObservation2 ? selectedObservation2.observation : "select an observation"))}
                       <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -521,7 +599,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
                         <CommandInput placeholder="Search observation..." />
                         <CommandEmpty>No observation found.</CommandEmpty>
                         <CommandGroup heading="Observation">
-                          {filteredAreaObservations.map((dep) => (
+                          {!newarea && filteredAreaObservations.map((dep) => (
                             <CommandItem
                               key={dep.id}
                               onSelect={() => handleAreaObservationSelection(dep)}
@@ -529,6 +607,16 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
                             >
                               
                               {dep.obs} 
+                            </CommandItem>
+                          ))}
+                          {newarea && observations.map((dep) => (
+                            <CommandItem
+                              key={dep.id}
+                              onSelect={() => handleNewAreaObservationSelection(dep)}
+                              className="text-sm"
+                            >
+                              
+                              {dep.observation} 
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -542,7 +630,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
           <div className="flex flex-col">
           {openObsBox && <div>
             <div className="font-bold">Enter new observation</div>
-          <div className="flex items-center"> {/* Create a flex container for input and button */}
+          <div className="flex items-center">
             <input
               type="text"
               placeholder="Enter new observation"
@@ -568,22 +656,42 @@ const DepartmentList: React.FC<DepartmentListProps> = ({ auditId, departments, e
         <div>
           <div className="font-bold mb-1">Reference</div>
           {!newobs && <div>
-            <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                role="combobox"
-                aria-expanded={openEqui}
-                aria-label="Select an observation"
-                className={cn("w-[200px] justify-between")}
-              >
-                { selectedObservation ? selectedObservation.reference : <span className="text-red-500">
-                  Select an observation first
-                </span>  }
-              </Button>
-            </PopoverTrigger>
-          </Popover></div>}
+            <Popover open={openRef} onOpenChange={setOpenRef}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  role="combobox"
+                  aria-expanded={openEqui}
+                  aria-label="Select a source"
+                  className={cn("w-[200px] justify-between")}
+                >
+                  {reference ? reference : "Select a reference"}
+                  <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0">
+                <Command>
+                  <CommandList>
+                    <CommandInput placeholder="Search reference..." />
+                    <CommandEmpty>No reference found.</CommandEmpty>
+                    <CommandGroup heading="Reference Source">
+                      {filteredRefObs.map((dep) => (
+                        <CommandItem
+                          key={dep.id}
+                          onSelect={() => {setReference(dep.reference);
+                          setRefCountry(dep.country)}}
+                          className="text-sm"
+                        >
+                          {dep.reference}  <span className="font-bold mx-2">{dep.country}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                  <CommandSeparator />
+                </Command>
+              </PopoverContent>
+            </Popover></div>}
           {newobs && <div className="flex">
             <input
               type="text"

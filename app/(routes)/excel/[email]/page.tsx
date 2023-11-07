@@ -5,10 +5,11 @@ import Container from "@/components/ui/container";
 import { useDropzone, FileRejection } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { MoveLeft, MoveLeftIcon, PlusCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios,{AxiosError} from 'axios';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/components/navbar';
 
 interface ExcelRecord {
   user: string;
@@ -28,17 +29,20 @@ interface ExcelRecord {
   new_area: Boolean;
   new_obs: Boolean;
   new_src: Boolean;
+  country: string;
 }
 
+const Excel = ({ params }: { params: { email: string } }) => {    
 
-const Excel = () => {
+  const encodedEmail = params.email;
+const decodedEmail = encodedEmail.replace('%40', '@');
+
+
   const [excelData, setExcelData] = useState<ExcelRecord[]>([]);
-
   const onDrop = (acceptedFiles: File[], _fileRejections: FileRejection[]) => {
     const promises = acceptedFiles.map((file) => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-
         reader.onload = (e) => {
           if (e.target && e.target.result) {
             const data = new Uint8Array(e.target.result as ArrayBuffer);
@@ -50,15 +54,12 @@ const Excel = () => {
             reject(new Error("File data is undefined or empty."));
           }
         };
-
         reader.onerror = (e) => {
           reject(new Error("An error occurred while reading the file."));
         };
-
         reader.readAsArrayBuffer(file);
       });
     });
-
     Promise.all(promises)
   .then((results) => {
     const combinedData = results.flat() as ExcelRecord[];
@@ -72,29 +73,30 @@ const Excel = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    multiple: true, // Allow multiple files
+    multiple: true, 
   });
 
   const router = useRouter()
-
   const handleExcelSubmit = async () => {
+
     try {
       for (const record of excelData) {
         const data = {
-          user: record.user,
-          department: record.department,
-          equipment: record.equipment,
-          eq_id: record.eq_id,
-          type: record.type,
-          location: record.location,
-          area: record.area,
-          observation: record.observation,
-          reference: record.reference,
-          source: record.source,
-          comment: record.comment,
-          rating: record.rating,
+          user: decodedEmail,
+          department: record.department ? record.department : "-",
+          equipment: record.equipment ? record.equipment : "-",
+          eq_id: record.eq_id ? record.eq_id : "-",
+          type: record.type ? record.type : "-",
+          location: record.location ? record.location : "-",
+          area: record.area ? record.area : "-",
+          observation: record.observation ? record.observation : "-",
+          reference: record.reference ? record.reference : "-",
+          source: record.source ? record.source : "-",
+          comment: record.comment ? record.comment : "-",
+          rating: record.rating ? record.rating : "-",
           auditId: record.audit_id,
           auditName: record.audit_name,
+          refCountry : record.country ? record.country : "-"
         };
   
         // Make a POST request to your API endpoint with the data for each record
@@ -147,7 +149,11 @@ const Excel = () => {
   
 
   return (
+    
     <Container>
+
+      <Button className='mr-2' onClick={()=>{router.push('/')}}><MoveLeft className='mr-2'/> Back</Button>
+
       <div
         {...getRootProps()}
         className="border-2 border-dashed border-gray-400 rounded p-4 text-gray-600 text-center cursor-pointer mt-2"

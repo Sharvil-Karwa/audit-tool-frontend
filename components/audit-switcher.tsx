@@ -35,7 +35,7 @@ export default function AuditSwitcher({ className, items = [] }: AuditSwitcherPr
 
   const formattedItems = items.map((item) => ({
     label: item.name,
-    value: item.id
+    value: item.auditId
   }));
 
   const currentAudit = formattedItems.find((item) => item.value === params.auditId);
