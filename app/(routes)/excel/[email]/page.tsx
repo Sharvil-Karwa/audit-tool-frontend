@@ -105,18 +105,18 @@ const decodedEmail = encodedEmail.replace('%40', '@');
           data
         );
 
-        if(record.new_area){
+        if(record.new_area===true){
           await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/${record.audit_id}/areas`, {area : record.area, observations: []}) 
         }
 
-        if(record.new_obs){
+        if(record.new_obs===true){
           await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/${record.audit_id}/observations`, {
             observation: record.observation,
             reference: record.reference
           }) 
         }
 
-        if(record.new_src){
+        if(record.new_src===true){
           await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/${record.audit_id}/sources`, {
             source: record.source
           }) 
@@ -130,7 +130,6 @@ const decodedEmail = encodedEmail.replace('%40', '@');
       router.push('/success');
     } catch (error) {
      
-      toast.error("An error occured");
 
       console.error("An error occurred:", error);
 
@@ -142,6 +141,9 @@ const decodedEmail = encodedEmail.replace('%40', '@');
         console.error("HTTP status code:", axiosError.response?.status);
         console.error("HTTP status text:", axiosError.response?.statusText);
       }
+
+      router.push('/success');
+
       
     }
   };

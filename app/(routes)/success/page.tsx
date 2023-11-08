@@ -1,6 +1,9 @@
 import Navbar from "@/components/navbar";
 import Container from "@/components/ui/container";
-import {ThumbsUp} from "lucide-react"
+import {MoveLeft, ThumbsUp} from "lucide-react"
+import { Button } from "@/components/ui/button";
+
+
 
 const SuccessPage = async () => { 
     return (
