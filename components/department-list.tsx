@@ -96,6 +96,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
   const inputRef2 = useRef<HTMLInputElement>(null);
   const inputRef3 = useRef<HTMLInputElement>(null);
   const inputRef4 = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
 
@@ -226,6 +227,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
 
     try {
 
+      setLoading(true);
 
       if(newarea && !comment){
         toast.error("Please fill additional observation details as you have added a new area");
@@ -337,6 +339,8 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
       });
       toast.error("Submission error")
       console.error('Error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -821,6 +825,7 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
       </div>
 
       <button
+          disabled={loading}
           onClick={handleSubmission}
           className="w-1/4 mx-4 md:w-auto bg-gray-800 text-white p-2 rounded mt-2 hover:bg-black focus:outline-none"
         >
