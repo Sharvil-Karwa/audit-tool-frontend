@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Download } from "lucide-react"
+import { ChevronDown, Download, Table } from "lucide-react"
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Separator } from '@radix-ui/react-dropdown-menu';
@@ -38,6 +38,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { currentUser } from "@clerk/nextjs";
+import Link from "next/link";
+import Excel from "@/app/(routes)/excel/[email]/page";
+
 
 interface DepartmentListProps {
   auditId: string;
@@ -52,6 +55,7 @@ interface DepartmentListProps {
   observations: Observation[];
   refObs: RefObs[];
   email: string;
+  access: Boolean;
 }
 
 interface SubmissionData {
@@ -74,7 +78,7 @@ interface SubmissionData {
   new_area: Boolean;
 }
 
-const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departments, equipments, areas, areaObservations, sources, ratings, auditName, references, observations, refObs }) => {
+const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departments, equipments, areas, areaObservations, sources, ratings, auditName, references, observations, refObs, access }) => {
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
   const [filteredEquipments, setFilteredEquipments] = useState<Equipment[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
@@ -219,7 +223,6 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
       "refCountry" : refCountry ? refCountry : ""
     };
 
-    console.log("data", data)
 
     if(!data.reference){
       data.reference = ""
@@ -292,9 +295,29 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
       
           if (response.status === 200) {
               toast.success("Submission successful");
-              window.location.reload()
+              if(newarea || newobs || newsrc){
+                window.location.reload();
+              }
+              else{
+                setSelectedDepartment(null);
+              setFilteredEquipments([]);
+              setSelectedEquipment(null);
+              setSelectedArea(null);
+              setFilteredAreaObservations([]);
+              setSelectedObservation(null);
+              setSelectedObservation2(null);
+              setSelectedSource(null);
+              setSelectedRating(null);
+              setFilteredRefObs([]);
+              setReference(null);
+              setRefCountry(null);
+              setComment("");
+              setNewArea("");
+              setNewObs("");
+              setNewRef("");
+              setNewSrc("");
+              }
           } else {
-            // Generate the Excel file with the data
             generateExcelFile({
               user: data.user,
               department: data.department,
@@ -359,14 +382,21 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
   const [newsrc, setnewsrc] = useState(false)
 
   return (
-    <div className="container mx-auto p-4 md:p-10 max-w-4xl">
+    <div className="container mx-auto md:p-8 max-w-4xl">
 
-      <div className="mt-4 mx-4 text-2xl font-bold">
-        {auditName}
-        <Button className="ml-4" onClick={downloadAuditData}>
+    <div className="mt-4 mx-4 text-2xl font-bold flex flex-row justify-between items-center">
+      <div>{auditName}</div>
+      {
+        access && <div className="flex items-center">
+        <Button onClick={downloadAuditData}>
           Download Audit Data <Download className="ml-4" />
         </Button>
+        <Link href={`/excel/${email}`} className="ml-4">
+          <Button><Table className="mr-2"/> Upload Excel</Button>
+        </Link>
       </div>
+      }
+    </div>
 
       <div className="flex flex-col mx-auto items-left"> 
         <div className="grid md:grid-cols-3 sm:grid-cols-1 mb-4">
@@ -509,7 +539,6 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
         </div>
         </div>
       </div>
-
       <div className="mx-4 flex flex-row items-end">
         <div className="mr-6">
           <div>
@@ -574,9 +603,6 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
           {!openAreaBox && <Button className="" onClick={()=>{setOpenAreaBox(true)}}><PlusCircle className="mr-3"/> Add</Button>}
         </div>
       </div>
-
-
-
       <div className="m-4 flex-col">
           <div className="mr-6">
           <div>
@@ -652,10 +678,6 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
           {!openObsBox && <Button className="mt-3 w-[100px]" onClick={()=>{setOpenObsBox(true)}}><PlusCircle className="mr-3"/> Add</Button>}
         </div>
       </div>
-
-          
-
-
         <div className="flex items-center m-4 space-x-12">
         <div>
           <div className="font-bold mb-1">Reference</div>
@@ -813,7 +835,6 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
           </Popover>
         </div>
         </div>
-
       <div className="md:col-span-2 flex-col justify-between mt-4 mx-4"> {/* Align the comment box to the right */}
         <div className="font-bold">Additonal Observation Details</div>
         <input
@@ -823,14 +844,13 @@ const DepartmentList: React.FC<DepartmentListProps> = ({email, auditId, departme
           className="w-full p-2 border rounded focus:outline-none focus:border-blue-500 h-[100px]"
         />
       </div>
-
       <button
           disabled={loading}
           onClick={handleSubmission}
-          className="w-1/4 mx-4 md:w-auto bg-gray-800 text-white p-2 rounded mt-2 hover:bg-black focus:outline-none"
+          className="w-1/4 mx-4 md:w-auto bg-gray-800 text-white p-2 rounded mt-2 hover:bg-black focus:outline-none mb-3"
         >
           Submit Form
-        </button>
+      </button>
     </div>
   );
 };

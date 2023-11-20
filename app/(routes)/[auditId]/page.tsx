@@ -30,12 +30,14 @@ const AuditPage = async ({ params }: { params: { auditId: string } }) => {
     const references = await getReferences(params.auditId);
     const observations =  await getObservationss(params.auditId)
     const refobs = await getRefObs(params.auditId) 
+    const access = audit.offline
+
 
     return (
       <Container>
         <Navbar audits = {audits} email={email}/>
         <div className="flex flex-col h-screen justify-center items-center border mt-8">
-          <DepartmentList email={email} auditName = {audit.name} departments={departments} equipments={equipments} auditId={params.auditId} areas={areas} areaObservations={areaObservations} ratings={ratings} sources={sources} references={references} observations={observations} refObs={refobs}/>
+          <DepartmentList access={access} email={email} auditName = {audit.name} departments={departments} equipments={equipments} auditId={params.auditId} areas={areas} areaObservations={areaObservations} ratings={ratings} sources={sources} references={references} observations={observations} refObs={refobs}/>
         </div>
       </Container>
     )

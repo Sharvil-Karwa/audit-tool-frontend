@@ -3,7 +3,7 @@ import Container from "./ui/container";
 import getAudits from "@/actions/get-audits";
 import AuditSwitcher from "./audit-switcher";
 import { Button } from "./ui/button";
-import { Table } from "lucide-react";
+import { Home, Table } from "lucide-react";
 import { UserButton, authMiddleware, currentUser, useUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
@@ -20,12 +20,9 @@ const Navbar = async () => {
           <Link href="/" className="ml-4 flex lg:ml-0 gap-x-2">
             <p className="font-bold text-xl">AUDIT TOOL</p>
           </Link>
-          {/* <div className="flex space-x-5 items-center">
-            <Link href={`/excel`} className="ml-4 flex lg:ml-0 gap-x-2">
-              <Button className=""><Table className="mr-2"/> Upload Excel</Button>
-            </Link>
-            <AuditSwitcher items={audits} />
-          </div> */}
+          <Link href="/" className="ml-4 flex lg:ml-0 gap-x-2">
+            <Button><Home className="mr-2"/>Home Page</Button>
+          </Link>
           <div className="">
                     <UserButton afterSignOutUrl="/"/>
                 </div>

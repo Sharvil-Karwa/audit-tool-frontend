@@ -1,6 +1,7 @@
 export interface Audit {
     id: string;
     name: string;
+    offline: boolean
   }
 
 export interface Department {
@@ -66,13 +67,6 @@ export interface Reference {
   country: string
 }
 
-export interface Reference {
-  id: string;
-  mainRef: string;
-  reference: string;
-  isMain: string;
-  country: string
-}
 
 export interface RefObs {
   id: string;
@@ -80,4 +74,23 @@ export interface RefObs {
   obsId: string;
   reference: string;
   country: string;
+}
+
+export interface Record{    
+  auditId: String
+  auditName: String
+  department: String
+  equipment: String
+  eq_id: String
+  type: String
+  location:    String
+  area:   String
+  reference:   String
+  refCountry: String
+  comment:     String
+  rating:      String
+  source:      String
+  observation: String
+  createdAt: String
+  id: String
 }

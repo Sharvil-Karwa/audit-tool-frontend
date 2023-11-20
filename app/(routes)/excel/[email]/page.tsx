@@ -31,13 +31,13 @@ interface ExcelRecord {
   new_area: Boolean;
   new_obs: Boolean;
   new_src: Boolean;
-  country: string;
+  refCountry: string;
 }
 
 const Excel = ({ params }: { params: { email: string } }) => {    
 
   const encodedEmail = params.email;
-const decodedEmail = encodedEmail.replace('%40', '@');
+  const decodedEmail = encodedEmail.replace('%40', '@');
 
 
   const [excelData, setExcelData] = useState<ExcelRecord[]>([]);
@@ -81,6 +81,7 @@ const decodedEmail = encodedEmail.replace('%40', '@');
   const router = useRouter()
   const handleExcelSubmit = async () => {
 
+
     try {
       for (const record of excelData) {
         const data = {
@@ -98,8 +99,9 @@ const decodedEmail = encodedEmail.replace('%40', '@');
           rating: record.rating ? record.rating : "-",
           auditId: record.audit_id,
           auditName: record.audit_name,
-          refCountry : record.country ? record.country : "-"
+          refCountry : record.refCountry ? record.refCountry : "-"
         };
+
   
         // Make a POST request to your API endpoint with the data for each record
         const response = await axios.post(
@@ -123,13 +125,10 @@ const decodedEmail = encodedEmail.replace('%40', '@');
             source: record.source
           }) 
         }
-  
-        if (response.status === 200) {
-          toast.success(`Record(s) for audit ${data.auditName} submitted successfully.`);
-        }
       }
   
-      router.push('/success');
+      toast.success("Submitted records successfully")
+      router.push(`/${excelData[0].audit_id}`);
     } catch (error) {
      
 
@@ -144,42 +143,112 @@ const decodedEmail = encodedEmail.replace('%40', '@');
         console.error("HTTP status text:", axiosError.response?.statusText);
       }
 
-      router.push('/success');
+      router.push(`/${excelData[0].audit_id}`);
 
       
     }
   };
   
+  let isFormatValid = true; // Flag to track if the format is valid
+const expectedHeaders = [
+  'department', 'equipment', 'eq_id', 'type', 'location', 'area', 'observation',
+  'reference', 'refCountry', 'comment', 'source', 'rating', 'new_area', 'new_obs',
+  'new_src', 'audit_name', 'audit_id'
+];
+
+// Check if the uploaded Excel data matches the expected format
+if (excelData.length > 0) {
+  const dataHeaders = Object.keys(excelData[0]);
+  isFormatValid = expectedHeaders.every(header => dataHeaders.includes(header));
+}
+
   
 
   return (
     
     <Container>
+       <Button className='mr-2' onClick={()=>{router.push('/')}}><MoveLeft className='mr-2'/> Back</Button>
 
-      <Button className='mr-2' onClick={()=>{router.push('/')}}><MoveLeft className='mr-2'/> Back</Button>
+<div
+  {...getRootProps()}
+  className="border-2 border-dashed border-gray-400 rounded p-4 text-gray-600 text-center cursor-pointer mt-2"
+>
+  <input {...getInputProps()} />
+  {isDragActive ? (
+    <p>Drop Excel files here...</p>
+  ) : (
+    <p>Drag 'n' drop Excel files here, or click to select them</p>
+  )}
+</div>
+     {
+      isFormatValid ? (
+     <div>
+  
 
-      <div
-        {...getRootProps()}
-        className="border-2 border-dashed border-gray-400 rounded p-4 text-gray-600 text-center cursor-pointer mt-2"
-      >
-        <input {...getInputProps()} />
-        {isDragActive ? (
-          <p>Drop Excel files here...</p>
-        ) : (
-          <p>Drag 'n' drop Excel files here, or click to select them</p>
-        )}
+{excelData.length > 0 && (
+<div className="mt-4">
+<div className='flex justify-between'>
+<h2 className="text-xl font-bold mb-2">Combined Excel File Contents:</h2> 
+<Button className='mb-2' onClick={handleExcelSubmit}>Submit</Button>
+</div>
+<div className="overflow-x-auto">
+<table className="table-auto w-full border-collapse border border-gray-300">
+  <thead>
+    <tr className="bg-gray-200">
+      <th className="px-4 py-2">Department</th>
+      <th className="px-4 py-2">Equipment</th>
+      <th className="px-4 py-2">Eq ID</th>
+      <th className="px-4 py-2">Type</th>
+      <th className="px-4 py-2">Location</th>
+      <th className="px-4 py-2">Area</th>
+      <th className="px-4 py-2">Observation</th>
+      <th className="px-4 py-2">Reference</th>
+      <th className="px-4 py-2">Country</th>
+      <th className="px-4 py-2">Comment</th>
+      <th className="px-4 py-2">Source</th>
+      <th className="px-4 py-2">Rating</th>
+      <th className="px-4 py-2">Audit Name</th>
+      <th className="px-4 py-2">Audit ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    {excelData.map((record, index) => (
+      <tr key={index} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
+        <td className="border px-4 py-2">{record.department}</td>
+        <td className="border px-4 py-2">{record.equipment}</td>
+        <td className="border px-4 py-2">{record.eq_id}</td>
+        <td className="border px-4 py-2">{record.type}</td>
+        <td className="border px-4 py-2">{record.location}</td>
+        <td className="border px-4 py-2">{record.area}</td>
+        <td className="border px-4 py-2 truncate">{record.observation}</td>
+        <td className="border px-4 py-2">{record.reference}</td>
+        <td className="border px-4 py-2">{record.refCountry}</td>
+        <td className="border px-4 py-2">{record.comment}</td>
+        <td className="border px-4 py-2">{record.source}</td>
+        <td className="border px-4 py-2">{record.rating}</td>
+        <td className="border px-4 py-2">{record.audit_name}</td>
+        <td className="border px-4 py-2">{record.audit_id}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+</div>
+</div>
+)}
+     </div>
+      ): (
+        <div className="mt-4 text-red-600">
+        <p>The uploaded Excel file does not match the expected format.</p>
+        <p>Please make sure the file contains the required columns:</p>
+        <ul className="list-disc list-inside">
+          {expectedHeaders.map((header, index) => (
+            <li key={index}>{header}</li>
+          ))}
+        </ul>
       </div>
-      {excelData.length > 0 && (
-        <div className="mt-4">
-          <div className='flex justify-between'>
-          <h2 className="text-xl font-bold mb-2">Combined Excel File Contents:</h2> 
-          <Button className='mb-2' onClick={handleExcelSubmit}>Submit</Button>
-          </div>
-          <pre className="bg-gray-100 p-4 rounded">
-            {JSON.stringify(excelData, null, 2)}
-          </pre>
-        </div>
-      )}
+      )
+     }
+
     </Container>
   );
 };
